@@ -25,6 +25,36 @@ batch_size = 32
 epochs = 1
 class_names = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"]
 
+def plot_images(x, y, number_of_images=2):
+  fig, axes1 = plt.subplots(number_of_images,number_of_images,figsize=(10,10))
+  for j in range(number_of_images):
+      for k in range(number_of_images):
+          i = np.random.choice(range(len(x)))
+          title = class_names[y[i:i+1][0][0]]
+          axes1[j][k].title.set_text(title)
+          axes1[j][k].set_axis_off()
+          axes1[j][k].imshow(x[i:i+1][0])
+
+def output_images(x, filename, idx, delim = "\n"):
+  with open(filename, "w") as f:
+    f.write("P3")
+    f.write(delim)
+    f.write("32 32 256")
+    f.write(delim)
+    for row in range(32):
+      for col in range(32):
+        r = x[idx][row][col][0]
+        g = x[idx][row][col][1]
+        b = x[idx][row][col][2]
+        f.write(str(r) + " " + str(g) + " " + str(b) + " ")
+      f.write(delim)
+
+output_images(x_train, "0.ppm", 0)
+output_images(x_train, "1.ppm", 1)
+output_images(x_train, "2.ppm", 2)
+output_images(x_train, "3.ppm", 3)
+output_images(x_train, "4.ppm", 4)
+
 model = tf.keras.Sequential()
 
 model.add(tf.keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(32, 32, 3)))
