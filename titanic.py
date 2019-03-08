@@ -27,7 +27,7 @@ def preprocess_csv(passengers, columns_to_delete):
         [passenger.pop(column_to_delete) for passenger in passengers]
     for i in range(len(passengers)):
         # Converting 'sex' field to float (id is 1 after removing labels column)
-        passengers[i][1] = 1. if data[i][1] == 'female' else 0.
+        passengers[i][1] = 1. if passengers[i][1] == 'female' else 0.
     return np.array(passengers, dtype=np.float32)
 
 def prepare_csv():
@@ -48,13 +48,15 @@ def prepare_csv():
 def prepare_odas(dataset):
   with connect_nightly() as conn:
     labels = conn.scan_as_python(
-      'select survived, 1 - survived as "deceased" from ' + dataset)
+      'select 1 - survived, survived from ' + dataset)
     data = conn.scan_as_python(
-      'select survived, pclass, if (gender = "female", 1, 0) as "gender", age, sibsp, parch, fare from ' + dataset)
+      'select pclass, if (gender = "female", 1, 0), age, sibsp, parch, fare from ' + dataset)
     return data, labels
 
+#data, labels = prepare_csv()
 data, labels = prepare_odas('demo_test.titanic')
-data, labels = prepare_csv()
+#data, labels = prepare_odas('demo_test.titanic_safe1')
+#data, labels = prepare_odas('demo_test.titanic_safe2')
 
 # Build neural network
 net = tflearn.input_data(shape=[None, 6])
@@ -71,9 +73,8 @@ model.fit(data, labels, n_epoch=10, batch_size=16, show_metric=True)
 # Let's create some data for DiCaprio and Winslet
 dicaprio = [3, 'Jack Dawson', 'male', 19, 0, 0, 'N/A', 5.0000]
 winslet = [1, 'Rose DeWitt Bukater', 'female', 17, 1, 2, 'N/A', 100.0000]
-# Preprocess data
-dicaprio, winslet = preprocess_csv([dicaprio, winslet], to_ignore)
 # Predict surviving chances (class 1 results)
+dicaprio, winslet = preprocess_csv([dicaprio, winslet], to_ignore)
 pred = model.predict([dicaprio, winslet])
 print("DiCaprio Surviving Rate:", pred[0][1])
 print("Winslet Surviving Rate:", pred[1][1])

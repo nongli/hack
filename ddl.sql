@@ -18,3 +18,13 @@ LOCATION 's3://okera-datalake/tableau/titanic_passengers';
 DROP VIEW IF EXISTS demo_test.titanic;
 CREATE VIEW demo_test.titanic
 AS SELECT * from demo_test.titanic_raw;
+
+DROP VIEW IF EXISTS demo_test.titanic_safe1;
+CREATE VIEW demo_test.titanic_safe1
+AS SELECT survived, pclass, name, "" as gender, age, sibsp, parch, ticket, fare 
+FROm demo_test.titanic_raw;
+
+DROP VIEW IF EXISTS demo_test.titanic_safe2;
+CREATE VIEW demo_test.titanic_safe2
+AS SELECT survived, pclass, name, "" as gender, 0 as age, sibsp, parch, ticket, fare 
+FROm demo_test.titanic_raw;
