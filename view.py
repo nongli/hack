@@ -20,4 +20,5 @@ if __name__ == "__main__":
     sys.exit(1)
 
   with connect_nightly() as conn:
-    print(conn.scan_as_pandas(sys.argv[1], max_records=1))
+    data = conn.scan_as_pandas(sys.argv[1], max_records=1).iloc[0][0]
+    print(data.decode('utf-8'))
