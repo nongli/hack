@@ -8,7 +8,31 @@ from keras.datasets import cifar10
 NUM_TRAIN_SAMPLES = 1000
 NUM_TEST_SAMPLES = 200
 
+def output_images(x, filename, idx, delim="\n", prefix=""):
+  with open(filename, "w") as f:
+    f.write(prefix)
+    f.write("P3")
+    f.write(delim)
+    f.write("32 32 256")
+    f.write(delim)
+    for row in range(32):
+      for col in range(32):
+        r = x[idx][row][col][0]
+        g = x[idx][row][col][1]
+        b = x[idx][row][col][2]
+        f.write(str(r) + " " + str(g) + " " + str(b) + " ")
+      f.write(delim)
+
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+#for i in range(NUM_TRAIN_SAMPLES):
+#  label = y_train[i][0]
+#  output_images(x_train, 'ppm/train/' + str(i) + ".ppm", i,
+#                delim=" ", prefix=str(label) + "|")
+#for i in range(NUM_TEST_SAMPLES):
+#  label = y_test[i][0]
+#  output_images(x_test, 'ppm/test/' + str(i) + ".ppm", i,
+#                delim=" ", prefix=str(label) + "|")
+
 x_train = x_train[0:NUM_TRAIN_SAMPLES, :, : :]
 y_train = y_train[0:NUM_TRAIN_SAMPLES, :]
 x_test = x_test[0:NUM_TEST_SAMPLES, :, : :]
@@ -24,36 +48,6 @@ batch_size = 32
 # 32 examples in a mini-batch, smaller batch size means more updates in one epoch
 epochs = 1
 class_names = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"]
-
-def plot_images(x, y, number_of_images=2):
-  fig, axes1 = plt.subplots(number_of_images,number_of_images,figsize=(10,10))
-  for j in range(number_of_images):
-      for k in range(number_of_images):
-          i = np.random.choice(range(len(x)))
-          title = class_names[y[i:i+1][0][0]]
-          axes1[j][k].title.set_text(title)
-          axes1[j][k].set_axis_off()
-          axes1[j][k].imshow(x[i:i+1][0])
-
-def output_images(x, filename, idx, delim = "\n"):
-  with open(filename, "w") as f:
-    f.write("P3")
-    f.write(delim)
-    f.write("32 32 256")
-    f.write(delim)
-    for row in range(32):
-      for col in range(32):
-        r = x[idx][row][col][0]
-        g = x[idx][row][col][1]
-        b = x[idx][row][col][2]
-        f.write(str(r) + " " + str(g) + " " + str(b) + " ")
-      f.write(delim)
-
-output_images(x_train, "0.ppm", 0)
-output_images(x_train, "1.ppm", 1)
-output_images(x_train, "2.ppm", 2)
-output_images(x_train, "3.ppm", 3)
-output_images(x_train, "4.ppm", 4)
 
 model = tf.keras.Sequential()
 
