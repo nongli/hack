@@ -4,8 +4,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from keras.datasets import cifar10
+import okera
 
-NUM_TRAIN_SAMPLES = 1000
+# pylint: disable=line-too-long
+NIGHTLY_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJjZXJlYnJvIiwiaXNzIjoiY2VyZWJyb2RhdGEuY29tIiwiZ3JvdXBzIjpbInJvb3QiLCJhZG1pbiJdLCJleHAiOjE1OTA1MTA4MDd9.diIN9SfRgaIiMEx9tEBM4vksuxCAE1l9fLH-J7qtJxUu0oLrAXFW6BiJrFt6-YdlDmAQhbB5Q7zGiBv8uKrq8tvaqpzV-16IRDgZ3SQVh4SklE5G5SX-cQ6b46kMIl4L9xommA7oHGtc-DIHMf77OXB2lAQp9XM2o3AXzJuZ_du2plm6Dzxz8_KXXgbhTyyQDHdsR4w0jH2u7ClMaPt6bSKlabweaGCC3Lz7y_56HQw0LF12C6m3vEW9vkV9iB7fxFmi9TjEVnnFVPkiCZa0OHUU-L2iKjipfRecz4O3X3IgF_tykVuFBtsWVz_0TyLPMSMGUMtB-yEXXhIQcTlftL4Q2fS7ToMPWZDZmF5OX9pwHdYvk-1A_BOglClad1RaD0HooNUf8Qr_kScxwxU4TcIIIjQffvAcX9jC3lB_x5tdosfPTQlkiRgqfgBWk73ryvcUImWpV00hdksMFBxW-o8-5leTseFYXDGK_aD_YMIminTUzt602evVSieYTRG1w5VwDJGv_iEcVjMB3zE7SVQYz9vcoMPjlNtmuxL_VCvvPPTmb8OjDha-NMiMGu6jQve4i-5aJNMdeZt-idvGPZjNb81yyZa9CKqt9s9R5YyfO8nlPyAa9c-eWhJp5UWVLlesN2IfWlMcnwCNN0dCfoMCmHfhGrWX5EU-yVFXmHA'
+# pylint: enable=line-too-long
+
+ctx = okera.context()
+def connect(server, port=12050, token=None):
+  if token:
+    ctx.enable_token_auth(token_str=token)
+  return ctx.connect(host=server, port=port)
+
+def connect_nightly(token=NIGHTLY_TOKEN):
+  return connect(server='ec2-34-215-143-132.us-west-2.compute.amazonaws.com', token=token)
+
+NUM_TRAIN_SAMPLES = 5000
 NUM_TEST_SAMPLES = 200
 
 def output_images(x, filename, idx, delim="\n", prefix=""):
@@ -23,20 +37,40 @@ def output_images(x, filename, idx, delim="\n", prefix=""):
         f.write(str(r) + " " + str(g) + " " + str(b) + " ")
       f.write(delim)
 
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
-#for i in range(NUM_TRAIN_SAMPLES):
-#  label = y_train[i][0]
-#  output_images(x_train, 'ppm/train/' + str(i) + ".ppm", i,
-#                delim=" ", prefix=str(label) + "|")
-#for i in range(NUM_TEST_SAMPLES):
-#  label = y_test[i][0]
-#  output_images(x_test, 'ppm/test/' + str(i) + ".ppm", i,
-#                delim=" ", prefix=str(label) + "|")
+def save_images():
+  for i in range(NUM_TRAIN_SAMPLES):
+    label = y_train[i][0]
+    output_images(x_train, 'ppm/train/' + str(i) + ".ppm", i,
+                  delim=" ", prefix=str(label) + "|")
+  for i in range(NUM_TEST_SAMPLES):
+    label = y_test[i][0]
+    output_images(x_test, 'ppm/test/' + str(i) + ".ppm", i,
+                  delim=" ", prefix=str(label) + "|")
 
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
 x_train = x_train[0:NUM_TRAIN_SAMPLES, :, : :]
 y_train = y_train[0:NUM_TRAIN_SAMPLES, :]
 x_test = x_test[0:NUM_TEST_SAMPLES, :, : :]
 y_test = y_test[0:NUM_TEST_SAMPLES, :]
+
+dataset = 'demo_test.cifar_train'
+with connect_nightly() as conn:
+  train = conn.scan_as_python(
+      'select label_idx, image_data(img) from ' + dataset, max_records=NUM_TRAIN_SAMPLES)
+  #train = conn.scan_as_python(
+  #    'select label_idx, image_data(blur(img, 25)) from ' + dataset, max_records=NUM_TRAIN_SAMPLES)
+  labels = []
+  image_data = []
+
+  # Turn the string of pixels into int array
+  for v in train:
+    labels.append(v[0])
+    for pixel in v[1].split(' '):
+      if not pixel:
+        continue
+      image_data.append(int(pixel))
+  x_train = np.array(image_data).reshape(len(train), 32, 32, 3)
+  y_train = np.array(labels).reshape((len(labels), 1))
 
 print('x_train shape:', x_train.shape)
 print('y_train shape', y_train.shape)

@@ -35,6 +35,12 @@ ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
 STORED AS TEXTFILE
 LOCATION 's3://cerebrodata-test/cifar/train';
 
+DROP TABLE IF EXISTS demo_test.cifar_train_single;
+CREATE EXTERNAL TABLE demo_test.cifar_train_single(label_idx INT, img STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
+STORED AS TEXTFILE
+LOCATION 's3://cerebrodata-test/cifar/train/0.ppm';
+
 DROP TABLE IF EXISTS demo_test.cifar_test;
 CREATE EXTERNAL TABLE demo_test.cifar_test(label_idx INT, img STRING)
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
